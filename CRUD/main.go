@@ -15,13 +15,13 @@ import (
 // userReview represents database entity.
 type userReview struct {
 	ID          string `json:"idxx"`
-	orderid     string `json:"orderid"`
-	productid   string `json:"productid"`
-	userid      string `json:"userid"`
-	rating      string `json:"rating"`
-	usersreview string `json:"review"`
-	createdat   string `json:"createdat"`
-	updatedat   string `json:"updatedat"`
+	OrderId     string `json:"orderid"`
+	ProductId   string `json:"productid"`
+	UserId      string `json:"userid"`
+	Rating      string `json:"rating"`
+	UsersReview string `json:"usersreview"`
+	CreatedAt   string `json:"createdat"`
+	UpdatedAt   string `json:"updatedat"`
 }
 
 const port = ":8000"
@@ -41,7 +41,7 @@ func Index(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprint(w, "WELCOME")
 }
 
-// GetUserReview Returns a list of all database User_Review to the response.
+// GetUserReviews Returns a list of all database User_Review to the response.
 func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 	rows, e := db.Query("SELECT * FROM user_review")
 	checkErr(e)
@@ -50,8 +50,8 @@ func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 	defer rows.Close()
 	for rows.Next() {
 		c := new(userReview)
-		e := rows.Scan(&c.ID, &c.orderid, &c.productid, &c.userid,
-			&c.rating, &c.usersreview, &c.createdat, &c.updatedat)
+		e := rows.Scan(&c.ID, &c.OrderId, &c.ProductId, &c.UserId,
+			&c.Rating, &c.UsersReview, &c.CreatedAt, &c.UpdatedAt)
 		checkErr(e)
 		userReviews = append(userReviews, c)
 		if e = rows.Err(); e != nil {
@@ -71,8 +71,8 @@ func GetUserReview(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 	}
 	row := db.QueryRow("SELECT * FROM user_review WHERE ID = ?", id)
-	e := row.Scan(&userRev.ID, &userRev.orderid, &userRev.productid, &userRev.userid,
-		&userRev.rating, &userRev.usersreview, &userRev.createdat, &userRev.updatedat)
+	e := row.Scan(&userRev.ID, &userRev.OrderId, &userRev.ProductId, &userRev.UserId,
+		&userRev.Rating, &userRev.UsersReview, &userRev.CreatedAt, &userRev.UpdatedAt)
 	checkErr(e)
 	json.NewEncoder(w).Encode(userRev)
 }
@@ -81,13 +81,13 @@ func GetUserReview(w http.ResponseWriter, r *http.Request) {
 func CreateUserReview(w http.ResponseWriter, r *http.Request) {
 	var userRev userReview
 
-	if isRatingError(userRev.rating) {
+	if isRatingError(userRev.Rating) {
 		http.Error(w, http.StatusText(500), 500)
 		return
 	}
 
 	_ = json.NewDecoder(r.Body).Decode(&userRev)
-	_, e := db.Exec("INSERT INTO user_review (orderid, productid, userid, rating, usersreview) VALUES (?,?,?,?,?)", userRev.orderid, userRev.productid, userRev.userid, userRev.rating, userRev.usersreview)
+	_, e := db.Exec("INSERT INTO user_review (orderid, productid, userid, rating, usersreview) VALUES (?,?,?,?,?)", userRev.OrderId, userRev.ProductId, userRev.UserId, userRev.Rating, userRev.UsersReview)
 	checkErr(e)
 	json.NewEncoder(w).Encode(userRev)
 }
@@ -101,11 +101,11 @@ func UpdateUserReview(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 	}
 	row := db.QueryRow("SELECT * FROM user_review WHERE ID = ?", id)
-	e := row.Scan(&userRev.ID, &userRev.orderid, &userRev.productid, &userRev.userid,
-		&userRev.rating, &userRev.usersreview, &userRev.createdat, &userRev.updatedat)
+	e := row.Scan(&userRev.ID, &userRev.OrderId, &userRev.ProductId, &userRev.UserId,
+		&userRev.Rating, &userRev.UsersReview, &userRev.CreatedAt, &userRev.UpdatedAt)
 	checkErr(e)
 	_ = json.NewDecoder(r.Body).Decode(&userRev)
-	_, err := db.Exec("UPDATE orderid=?, productid=?, userid=?, rating=?, usersreview=? WHERE ID = ?", userRev.orderid, userRev.productid, userRev.userid, userRev.rating, userRev.usersreview, id)
+	_, err := db.Exec("UPDATE orderid=?, productid=?, userid=?, rating=?, usersreview=? WHERE ID = ?", userRev.OrderId, userRev.ProductId, userRev.UserId, userRev.Rating, userRev.UsersReview, id)
 	checkErr(err)
 	json.NewEncoder(w).Encode(userRev)
 }
