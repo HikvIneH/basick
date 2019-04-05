@@ -6,6 +6,7 @@ import (
 	"fmt"
 	"log"
 	"net/http"
+	"strconv"
 
 	_ "github.com/go-sql-driver/mysql"
 	"github.com/gorilla/mux"
@@ -75,6 +76,21 @@ func GetUserReview(w http.ResponseWriter, r *http.Request) {
 	json.NewEncoder(w).Encode(userRev)
 }
 
+// CreateUserReview. Post the database.
+func CreateUserReview(w http.ResponseWriter, r *http.Request) {
+	var userRev userReview
+
+	if isRatingError(userRev.rating) {
+		http.Error(w, http.StatusText(500), 500)
+		return
+	}
+
+	_ = json.NewDecoder(r.Body).Decode(&userRev)
+	_, e := db.Exec("INSERT INTO user_review (order_id, product_id, user_id, rating, users_review) VALUES (?,?,?,?,?)", userRev.order_id, userRev.product_id, userRev.user_id, userRev.rating, userRev.users_review)
+	checkErr(e)
+	json.NewEncoder(w).Encode(userRev)
+}
+
 func main() {
 	fmt.Println("first line works")
 	// Establish a connection to MySQL.
@@ -95,4 +111,12 @@ func main() {
 
 	log.Println("Server is up on " + port + " port")
 	log.Fatal(http.ListenAndServe(port, r))
+}
+
+func isRatingError(rating string) bool {
+	realRating, e := strconv.ParseFloat(rating, 64)
+	if e != nil {
+		fmt.Print(e.Error())
+	}
+	return realRating < 1.0 || realRating > 5.0
 }
