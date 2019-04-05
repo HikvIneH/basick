@@ -1,6 +1,6 @@
 ## Code Smell
 ----
-##Refused Bequest.
+## Refused Bequest.
 
 Quoting Martin Fowler's book Refactoring: improving the design of existing code: 
 

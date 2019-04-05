@@ -1,6 +1,6 @@
 ## REST
 ----
-##GET & POST.
+## GET & POST.
 
 ### Dos
 
