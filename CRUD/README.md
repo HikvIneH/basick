@@ -5,7 +5,7 @@ _____
 ## GO
 Go Version:
 - `GO1.12`
-> This version of go is already support 
+> This version of go is already supporting 
 > the go module, so we can work outside 
 > of the GOPATH src directory.
 
