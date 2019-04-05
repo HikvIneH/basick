@@ -14,14 +14,14 @@ import (
 
 // userReview represents database entity.
 type userReview struct {
-	ID           string `json:"id"`
-	order_id     string `json:"orderid"`
-	product_id   string `json:"productid"`
-	user_id      string `json:"userid"`
-	rating       string `json:"rating"`
-	users_review string `json:"review"`
-	created_at   string `json:"createdat"`
-	updated_at   string `json:"updatedat"`
+	ID          string `json:"idxx"`
+	orderid     string `json:"orderid"`
+	productid   string `json:"productid"`
+	userid      string `json:"userid"`
+	rating      string `json:"rating"`
+	usersreview string `json:"review"`
+	createdat   string `json:"createdat"`
+	updatedat   string `json:"updatedat"`
 }
 
 const port = ":8000"
@@ -45,19 +45,20 @@ func Index(w http.ResponseWriter, r *http.Request) {
 func GetUserReviews(w http.ResponseWriter, r *http.Request) {
 	rows, e := db.Query("SELECT * FROM user_review")
 	checkErr(e)
-	defer rows.Close()
 	userReviews := make([]*userReview, 0)
 
+	defer rows.Close()
 	for rows.Next() {
 		c := new(userReview)
-		e := rows.Scan(&c.ID, &c.order_id, &c.product_id, &c.user_id,
-			&c.rating, &c.users_review, &c.created_at, &c.updated_at)
+		e := rows.Scan(&c.ID, &c.orderid, &c.productid, &c.userid,
+			&c.rating, &c.usersreview, &c.createdat, &c.updatedat)
 		checkErr(e)
 		userReviews = append(userReviews, c)
 		if e = rows.Err(); e != nil {
 			log.Fatal(e)
 		}
 	}
+
 	json.NewEncoder(w).Encode(userReviews)
 }
 
@@ -70,13 +71,13 @@ func GetUserReview(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, http.StatusText(500), 500)
 	}
 	row := db.QueryRow("SELECT * FROM user_review WHERE ID = ?", id)
-	e := row.Scan(&userRev.ID, &userRev.order_id, &userRev.product_id, &userRev.user_id,
-		&userRev.rating, &userRev.users_review, &userRev.created_at, &userRev.updated_at)
+	e := row.Scan(&userRev.ID, &userRev.orderid, &userRev.productid, &userRev.userid,
+		&userRev.rating, &userRev.usersreview, &userRev.createdat, &userRev.updatedat)
 	checkErr(e)
 	json.NewEncoder(w).Encode(userRev)
 }
 
-// CreateUserReview. Post the database.
+// CreateUserReview Post the database.
 func CreateUserReview(w http.ResponseWriter, r *http.Request) {
 	var userRev userReview
 
@@ -86,7 +87,38 @@ func CreateUserReview(w http.ResponseWriter, r *http.Request) {
 	}
 
 	_ = json.NewDecoder(r.Body).Decode(&userRev)
-	_, e := db.Exec("INSERT INTO user_review (order_id, product_id, user_id, rating, users_review) VALUES (?,?,?,?,?)", userRev.order_id, userRev.product_id, userRev.user_id, userRev.rating, userRev.users_review)
+	_, e := db.Exec("INSERT INTO user_review (orderid, productid, userid, rating, usersreview) VALUES (?,?,?,?,?)", userRev.orderid, userRev.productid, userRev.userid, userRev.rating, userRev.usersreview)
+	checkErr(e)
+	json.NewEncoder(w).Encode(userRev)
+}
+
+// UpdateUserReview Update user review (identified by parameter) from the database
+func UpdateUserReview(w http.ResponseWriter, r *http.Request) {
+	var userRev userReview
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, http.StatusText(500), 500)
+	}
+	row := db.QueryRow("SELECT * FROM user_review WHERE ID = ?", id)
+	e := row.Scan(&userRev.ID, &userRev.orderid, &userRev.productid, &userRev.userid,
+		&userRev.rating, &userRev.usersreview, &userRev.createdat, &userRev.updatedat)
+	checkErr(e)
+	_ = json.NewDecoder(r.Body).Decode(&userRev)
+	_, err := db.Exec("UPDATE orderid=?, productid=?, userid=?, rating=?, usersreview=? WHERE ID = ?", userRev.orderid, userRev.productid, userRev.userid, userRev.rating, userRev.usersreview, id)
+	checkErr(err)
+	json.NewEncoder(w).Encode(userRev)
+}
+
+// DeleteUserReview Removes user review (identified by parameter) from the database.
+func DeleteUserReview(w http.ResponseWriter, r *http.Request) {
+	var userRev userReview
+	vars := mux.Vars(r)
+	id := vars["id"]
+	if id == "" {
+		http.Error(w, http.StatusText(500), 500)
+	}
+	_, e := db.Exec("DELETE FROM user_review WHERE ID = ?", id)
 	checkErr(e)
 	json.NewEncoder(w).Encode(userRev)
 }
@@ -94,7 +126,7 @@ func CreateUserReview(w http.ResponseWriter, r *http.Request) {
 func main() {
 	fmt.Println("first line works")
 	// Establish a connection to MySQL.
-	db, err = sql.Open("mysql", "test:test@tcp(db:3306)/user_review")
+	db, err = sql.Open("mysql", "test:test@/test_golang?charset=utf8")
 	checkErr(err)
 
 	defer db.Close()
@@ -108,6 +140,9 @@ func main() {
 	r.HandleFunc("/", Index)
 	r.HandleFunc("/user-review", GetUserReviews).Methods("GET")
 	r.HandleFunc("/user-review/{id}", GetUserReview).Methods("GET")
+	r.HandleFunc("/user-review/{id}", CreateUserReview).Methods("POST")
+	r.HandleFunc("/user-review/{id}", UpdateUserReview).Methods("PUT")
+	r.HandleFunc("/user-review/{id}", DeleteUserReview).Methods("DELETE")
 
 	log.Println("Server is up on " + port + " port")
 	log.Fatal(http.ListenAndServe(port, r))
